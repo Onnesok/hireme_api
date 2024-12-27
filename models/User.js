@@ -10,12 +10,10 @@ const userSchema = new mongoose.Schema({
   role: { type: String, required: true, default: 'user' }
 }, { timestamps: true });
 
-// Exclude password and reorganize the response
+// Exclude password from the response
 userSchema.methods.toJSON = function() {
   const obj = this.toObject();
   delete obj.password;
-  delete obj.created_at;
-  delete obj.updated_at;
   return obj;
 };
 

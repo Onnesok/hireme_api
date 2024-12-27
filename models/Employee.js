@@ -7,9 +7,7 @@ const employeeSchema = new mongoose.Schema({
   phone_number: { type: String },
   profile_picture: { type: String },
   address: { type: String },
-  role: { type: String, required: true },
-  created_at: { type: Date, default: Date.now },
-  updated_at: { type: Date, default: Date.now }
+  role: { type: String, required: true }
 }, { timestamps: true });
 
 // Exclude password from the response

@@ -2,28 +2,35 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 
-// Route to create a new user or admin
+// Route to create a new user, admin, or employee
 router.post('/register', userController.createUser);
 
-// Route to get all users
-router.get('/', userController.getUsers);
-
-// Route to get a single user by ID
-router.get('/:id', userController.getUserById);
-
-// Route to update a user by ID
-router.put('/:id', userController.updateUserById);
-
-// Route to delete a user by ID
-router.delete('/:id', userController.deleteUserById);
-
-// Route to login a user or admin
+// Route for login
 router.post('/login', userController.loginUser);
 
-// Route to get user by email
-router.get('/email/:email', userController.getUserByEmail);
+// Routes for users
+router.get('/users', userController.getAll('user'));
+router.get('/users/:id', userController.getById('user'));
+router.put('/users/:id', userController.updateById('user'));
+router.delete('/users/:id', userController.deleteById('user'));
 
-// Route to block a user and move their data to blocked_users collection
+// Routes for admins
+router.get('/admins', userController.getAll('admin'));
+router.get('/admins/:id', userController.getById('admin'));
+router.put('/admins/:id', userController.updateById('admin'));
+router.delete('/admins/:id', userController.deleteById('admin'));
+
+// Routes for employees
+router.get('/employees', userController.getAll('employee'));
+router.get('/employees/:id', userController.getById('employee'));
+router.put('/employees/:id', userController.updateById('employee'));
+router.delete('/employees/:id', userController.deleteById('employee'));
+
+// Route to block a user, admin, or employee
 router.post('/block', userController.blockUser);
+
+// Routes for getting and updating profile by email
+router.get('/profile/:email', userController.getProfileByEmail);
+router.put('/profile/:email', userController.updateProfileByEmail);
 
 module.exports = router;
