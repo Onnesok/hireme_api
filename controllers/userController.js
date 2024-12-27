@@ -2,22 +2,24 @@ const User = require('../models/User');
 const Admin = require('../models/Admin');
 const BlockedUser = require('../models/BlockedUser');
 
-// Create a new user or admin
+// Create a new user, admin, or employee
 exports.createUser = async (req, res) => {
-  const { username, email, password, role } = req.body;
+  const { username, email, password, phone_number, profile_picture, address, role } = req.body;
   if (!username || !email || !password) {
     return res.status(400).json({ message: 'All fields are required' });
   }
   try {
+    let newUser;
     if (role === 'admin') {
-      const newAdmin = new Admin({ username, email, password, role });
-      await newAdmin.save();
-      res.status(201).json(newAdmin);
+      newUser = new Admin({ username, email, password, phone_number, profile_picture, address, role });
+    } else if (role === 'user') {
+      newUser = new User({ username, email, password, phone_number, profile_picture, address, role });
     } else {
-      const newUser = new User({ username, email, password, role });
-      await newUser.save();
-      res.status(201).json(newUser);
+      newUser = new Employee({ username, email, password, phone_number, profile_picture, address, role });
     }
+    await newUser.save();
+
+    res.status(201).json(newUser.toJSON());
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -90,12 +92,16 @@ exports.loginUser = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (user && user.password === password) {
-      return res.status(200).json({ message: 'Login successful', user });
+      const userWithoutPassword = user.toObject();
+      delete userWithoutPassword.password;
+      return res.status(200).json({ message: 'Login successful', user: userWithoutPassword });
     }
 
     const admin = await Admin.findOne({ email });
     if (admin && admin.password === password) {
-      return res.status(200).json({ message: 'Login successful', admin });
+      const adminWithoutPassword = admin.toObject();
+      delete adminWithoutPassword.password;
+      return res.status(200).json({ message: 'Login successful', admin: adminWithoutPassword });
     }
 
     return res.status(401).json({ message: 'Invalid email or password' });
@@ -121,35 +127,42 @@ exports.getUserByEmail = async (req, res) => {
   }
 };
 
-// Block a user and move to blocked_users collection
+
+// Block a user, admin, or employee and move to blocked_users collection
 exports.blockUser = async (req, res) => {
   const { email } = req.body;
   if (!email || !email.includes('@')) {
     return res.status(400).json({ message: 'Invalid email format' });
   }
   try {
-    // Find the user in the users or admins collection
+    // Find the user in the users, admins, or employees collection
     const user = await User.findOne({ email });
     const admin = await Admin.findOne({ email });
+    const employee = await Employee.findOne({ email });
 
-    if (!user && !admin) {
+    if (!user && !admin && !employee) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Move the user/admin to blocked_users collection
+    // Move the user/admin/employee to blocked_users collection
     const blockedUser = new BlockedUser({
-      username: user ? user.username : admin.username,
-      email: user ? user.email : admin.email,
-      password: user ? user.password : admin.password,
-      role: user ? user.role : 'admin',
+      username: user ? user.username : admin ? admin.username : employee.username,
+      email: user ? user.email : admin ? admin.email : employee.email,
+      password: user ? user.password : admin ? admin.password : employee.password,
+      phone_number: user ? user.phone_number : admin ? admin.phone_number : employee.phone_number,
+      profile_picture: user ? user.profile_picture : admin ? admin.profile_picture : employee.profile_picture,
+      address: user ? user.address : admin ? admin.address : employee.address,
+      role: user ? user.role : admin ? admin.role : employee.role,
     });
     await blockedUser.save();
 
-    // Remove the user/admin from the users or admins collection
+    // Remove the user/admin/employee from the users, admins, or employees collection
     if (user) {
       await User.deleteOne({ email: user.email });
-    } else {
+    } else if (admin) {
       await Admin.deleteOne({ email: admin.email });
+    } else {
+      await Employee.deleteOne({ email: employee.email });
     }
 
     res.status(200).json({ message: 'User has been blocked and moved to blocked_users collection' });
