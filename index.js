@@ -1,14 +1,16 @@
-const http = require('node:http');
+const express = require('express');
+const connectDB = require('./config/db');
+const userRoutes = require('./routes/userRoutes');
+require('dotenv').config();
 
-const hostname = '127.0.0.1';
-const port = 3000;
+const app = express();
+connectDB();
 
-const server = http.createServer((req, res) => {
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'text/plain');
-  res.end('Hello, World!\n');
-});
+app.use(express.json());
 
-server.listen(port, hostname, () => {
-  console.log(`Server running at http://${hostname}:${port}/`);
+app.use('/api/users', userRoutes);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
