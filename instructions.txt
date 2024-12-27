@@ -1,7 +1,0 @@
-npm init   // for init
-
-npm install express mongoose dotenv cors body-parser  // for installing packages
-
-npm install nodemon --save-dev   //optional but better with others
-
-
