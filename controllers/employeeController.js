@@ -3,7 +3,7 @@ const Employee = require('../models/Employee');
 
 // Get employees who are free on a particular date
 exports.getFreeEmployees = async (req, res) => {
-  const { date } = req.query;
+  const { date, role } = req.query; // Extract role from query parameters
   if (!date) {
     return res.status(400).json({ message: 'Date is required' });
   }
@@ -20,10 +20,16 @@ exports.getFreeEmployees = async (req, res) => {
       scheduled_date: { $gte: startOfDay, $lte: endOfDay }
     }).distinct('employee_email');
 
-    // Find employees who are not booked on that date
-    const freeEmployees = await Employee.find({
+    // Find employees who are not booked on that date and match the role if provided
+    const query = {
       email: { $nin: bookedEmployees }
-    });
+    };
+
+    if (role) {
+      query.role = role;
+    }
+
+    const freeEmployees = await Employee.find(query);
 
     res.status(200).json(freeEmployees);
   } catch (error) {
