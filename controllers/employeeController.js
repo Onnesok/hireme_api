@@ -30,3 +30,13 @@ exports.getFreeEmployees = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// Example function to get all employees
+exports.getAllEmployees = async (req, res) => {
+  try {
+    const employees = await Employee.find();
+    res.status(200).json(employees);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
