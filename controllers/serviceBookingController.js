@@ -60,10 +60,23 @@ exports.createServiceBooking = async (req, res) => {
   }
 };
 
-// Get all service bookings
+// Get all service bookings with optional filters
 exports.getAllServiceBookings = async (req, res) => {
+  const { customer_email, employee_email, status } = req.query;
+  const query = {};
+
+  if (customer_email) {
+    query.customer_email = customer_email;
+  }
+  if (employee_email) {
+    query.employee_email = employee_email;
+  }
+  if (status) {
+    query.status = status;
+  }
+
   try {
-    const serviceBookings = await ServiceBooking.find();
+    const serviceBookings = await ServiceBooking.find(query);
     res.status(200).json(serviceBookings);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -114,11 +127,35 @@ exports.updateBookingStatus = async (req, res) => {
   try {
     const currentDate = new Date();
     const updatedBookings = await ServiceBooking.updateMany(
-      { scheduled_date: { $lt: currentDate }, status: 'pending' },
+      { scheduled_date: { $lt: currentDate }, status: { $nin: ['completed', 'cancelled'] } },
       { $set: { status: 'completed' } }
     );
 
     res.status(200).json({ message: 'Booking statuses updated', updatedCount: updatedBookings.modifiedCount });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Update the status of a specific service booking
+exports.updateStatus = async (req, res) => {
+  const { status } = req.body;
+  if (!['pending', 'completed', 'cancelled'].includes(status)) {
+    return res.status(400).json({ message: 'Invalid status' });
+  }
+
+  try {
+    const serviceBooking = await ServiceBooking.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true, runValidators: true }
+    );
+
+    if (!serviceBooking) {
+      return res.status(404).json({ message: 'Service booking not found' });
+    }
+
+    res.status(200).json(serviceBooking);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
