@@ -6,11 +6,16 @@ const BlockedUser = require('../models/BlockedUser');
 // Create a new user, admin, or employee with explicit role
 exports.createUser = async (req, res) => {
   const { username, email, password, phone_number, profile_picture, address, role } = req.body;
+
   if (!username || !email || !password || !role) {
     return res.status(400).json({ message: 'All fields including role are required' });
   }
 
   try {
+    const blockedUser = await BlockedUser.findOne({ email });
+    if (blockedUser) {
+      return res.status(403).json({ message: 'User is blocked and cannot be created.' });
+    }
     let newUser;
     if (role === 'admin') {
       newUser = new Admin({ username, email, password, phone_number, profile_picture, address, role });
